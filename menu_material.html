@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Menú Dashboard Bomberos</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background-color: #031626;
+    overflow: hidden;
+}
+
+.menu {
+    width: 400px;
+    height: 100vh;
+    background-color: #031626;
+    border-right: 2px solid #ff3b3b; /* rojo bomberos */
+    padding-top: 20px;
+    box-shadow: 5px 0 30px rgba(0,0,0,0.7);
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu li { position: relative; }
+
+.menu a {
+    display: block;
+    padding: 35px 15px;
+    color: #ff6b6b;  /* rojo claro */
+    text-decoration: none;
+    font-size: 19px;
+    transition: all 0.4s ease;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+}
+
+.menu a:hover {
+    color: #fff;
+    background: linear-gradient(90deg, rgba(255,107,107,0.45), rgba(255,107,107,0.15));
+    border-left: 6px solid #ff3b3b;
+    box-shadow: inset 0 0 30px rgba(255,107,107,0.8), 2px 2px 10px rgba(0,0,0,0.5);
+    transform: translateX(3px);
+}
+
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    background-color: #031626;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+}
+
+.submenu li a {
+    font-size: 18px;
+    padding-left: 70px;
+    color: #ffb385;
+}
+
+.submenu li a:hover {
+    color: #fff;
+    background-color: rgba(255,107,107,0.35);
+    transform: translateX(6px);
+    box-shadow: inset 0 0 15px rgba(255,107,107,0.5);
+}
+
+.menu li:hover > .submenu {
+    max-height: 500px;
+    opacity: 1;
+}
+
+.menu li > a:after {
+    content: "▶";
+    position: absolute;
+    right: 30px;
+    font-size: 16px;
+    transition: transform 0.4s ease;
+}
+
+.menu li:hover > a:after {
+    transform: rotate(90deg);
+    color: #ff3b3b;
+}
+
+.menu li:not(:has(.submenu)) > a:after {
+    content: "";
+}
+</style>
+</head>
+
+<body>
+
+<div class="menu">
+    <ul>
+        <li><a href="incidencias.html" target="Pantalla">Incidencias e Intervenciones</a></li>
+
+        <li>
+            <a href="#">Informes</a>
+            <ul class="submenu">
+                <li><a href="informesBrigadas.html" target="Pantalla">Informes Brigadas</a></li>
+                <li><a href="informesZonas.html" target="Pantalla">Informes Zonas</a></li>
+            </ul>
+        </li>
+
+        <li>
+            <a href="#">Material / Vehículos</a>
+            <ul class="submenu">
+                <li><a href="vehiculos.html" target="Pantalla">Vehículos</a></li>
+                <li><a href="equipamiento.html" target="Pantalla">Equipamiento</a></li>
+            </ul>
+        </li>
+
+        <li>
+            <a href="#">Jefatura</a>
+            <ul class="submenu">
+                <li>
+                    <a href="#"
+                       onclick="accesoJefatura(event, 'jefatura.html', 'BOM1234')">
+                        Acceso Jefatura
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<script>
+function accesoJefatura(event, archivo, passwordCorrecta) {
+    event.preventDefault();
+    const password = prompt("Acceso restringido. Introduce la contraseña:");
+    if(password === passwordCorrecta) {
+        window.open(archivo, "Pantalla");
+    } else if(password !== null) {
+        alert("Contraseña incorrecta");
+    }
+}
+</script>
+
+</body>
+</html>

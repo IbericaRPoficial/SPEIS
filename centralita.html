@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomberos - Centralita Operativa</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f0a0a;
+    color: #f2f2f2;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+    color: #ff5722;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 3px solid #ff5722;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+
+form {
+    max-width: 420px;
+    margin: 0 auto 30px;
+    background: #1a0f0f;
+    padding: 25px;
+    border-radius: 6px;
+    border-left: 6px solid #ff9800;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    background: #0d0606;
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    background: #ff5722;
+    color: #000;
+}
+
+.borrar {
+    background: transparent;
+    border: 1px solid #ff5722;
+    color: #ff5722;
+    margin: 10px auto 20px;
+    display: none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a0f0f;
+}
+
+th, td {
+    padding: 14px;
+    border-bottom: 1px solid #333;
+}
+
+th {
+    background: #2b0d0d;
+    color: #ff9800;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.dotaciones {
+    font-family: monospace;
+    color: #ffcc80;
+}
+
+.acudir {
+    background: #ff9800;
+    color: #000;
+    margin-bottom: 6px;
+}
+
+.finalizar {
+    background: transparent;
+    border: 1px solid #ff5252;
+    color: #ff5252;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Centralita Bomberos</h2>
+
+<form id="loginForm">
+    <input type="text" id="dotacion" placeholder="DOTACIÓN (Ej: B-21 / A-3)" required>
+    <button type="submit">Entrar en servicio</button>
+</form>
+
+<button class="borrar" id="borrarDotacion">Cambiar dotación</button>
+
+<table id="tablaBomberos" style="display:none;">
+<thead>
+<tr>
+    <th>#</th>
+    <th>Nombre</th>
+    <th>Ubicación</th>
+    <th>Incidente</th>
+    <th>Dotaciones</th>
+    <th>Acciones</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAkho8Wvxnygmbl0pRXKGUjBIIP3qyEtK8",
+    authDomain: "proyecto-erlc.firebaseapp.com",
+    databaseURL: "https://proyecto-erlc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "proyecto-erlc",
+    storageBucket: "proyecto-erlc.firebasestorage.app",
+    messagingSenderId: "213209172438",
+    appId: "1:213209172438:web:63bdcca16bfad791263c77"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const loginForm = document.getElementById('loginForm');
+const tabla = document.getElementById('tablaBomberos');
+const tbody = tabla.querySelector('tbody');
+const borrarBtn = document.getElementById('borrarDotacion');
+
+let dotacionActual = localStorage.getItem('dotacion_bomberos');
+
+if (dotacionActual) iniciar();
+
+loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    dotacionActual = document.getElementById('dotacion').value.trim().toUpperCase();
+    localStorage.setItem('dotacion_bomberos', dotacionActual);
+    iniciar();
+});
+
+borrarBtn.onclick = () => {
+    localStorage.removeItem('dotacion_bomberos');
+    location.reload();
+};
+
+function iniciar() {
+    loginForm.style.display = 'none';
+    tabla.style.display = 'table';
+    borrarBtn.style.display = 'block';
+    cargarAvisos();
+}
+
+function cargarAvisos() {
+    onValue(ref(db, 'avisos'), snap => {
+        tbody.innerHTML = '';
+        const avisos = snap.val() || {};
+
+        Object.entries(avisos).forEach(([key, data]) => {
+            if (data.estado !== 'en_proceso') return;
+
+            const servicios = data.serviciosAsignados || [];
+            if (!servicios.includes('bomberos')) return;
+
+            const dotaciones = data.dotaciones || [];
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>#${data.numeroLlamada}</td>
+                <td>${data.nombre}</td>
+                <td>${data.ubicacion}</td>
+                <td>${data.explicacion}</td>
+                <td class="dotaciones">${dotaciones.join(', ')}</td>
+                <td>
+                    <button class="acudir">Acudir</button>
+                    <button class="finalizar">Finalizar</button>
+                </td>
+            `;
+
+            tr.querySelector('.acudir').onclick = () => {
+                if (!dotaciones.includes(dotacionActual)) {
+                    dotaciones.push(dotacionActual);
+                    update(ref(db, 'avisos/' + key), { dotaciones });
+                }
+            };
+
+            tr.querySelector('.finalizar').onclick = () => {
+                if (confirm('¿Finalizar aviso?')) {
+                    update(ref(db, 'avisos/' + key), { estado: 'finalizado' });
+                }
+            };
+
+            tbody.appendChild(tr);
+        });
+    });
+}
+</script>
+
+</body>
+</html>

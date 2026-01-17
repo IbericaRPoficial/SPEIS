@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body {
+    margin:0;
+    font-family:'Segoe UI', Roboto, sans-serif;
+    background-color:#2b0d0d;
+    color:#ffcc80;
+}
+
+.navbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    height:100%;
+    padding:0 20px;
+}
+
+.logo {
+    font-weight:bold;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    color:#ff9800;
+}
+
+.logo i { margin-right:8px; }
+
+.menu {
+    list-style:none;
+    display:flex;
+    margin:0;
+    padding:0;
+}
+
+.menu li {
+    padding:20px 20px;
+    cursor:pointer;
+    text-transform:uppercase;
+    font-weight:bold;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    color:#ffcc80;
+}
+
+.menu li:hover {
+    background-color:#3a1313;
+    color:#ff9800;
+}
+
+.badge {
+    background-color:#ff5722;
+    color:#000;
+    font-size:10px;
+    padding:2px 6px;
+    border-radius:50%;
+    margin-left:5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">
+        <i class="fas fa-fire-extinguisher"></i> BOMBEROS
+    </div>
+
+    <ul class="menu">
+        <li onclick="parent.contenidoFrame.location.href='inicio.html'">
+            <i class="fas fa-home"></i>&nbsp;Inicio
+        </li>
+
+        <li onclick="parent.contenidoFrame.location.href='centralita.html'">
+            <i class="fas fa-fire"></i>&nbsp;Avisos
+            <span id="notif" class="badge">0</span>
+        </li>
+
+        <li onclick="parent.contenidoFrame.location.href='dotaciones.html'">
+            <i class="fas fa-water"></i>&nbsp;Dotaciones
+        </li>
+
+        <li onclick="parent.contenidoFrame.location.href='material.html'">
+            <i class="fas fa-toolbox"></i>&nbsp;Material
+        </li>
+
+        <li onclick="parent.contenidoFrame.location.href='configuracion.html'">
+            <i class="fas fa-cogs"></i>&nbsp;Configuración
+        </li>
+    </ul>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAkho8Wvxnygmbl0pRXKGUjBIIP3qyEtK8",
+    authDomain: "proyecto-erlc.firebaseapp.com",
+    databaseURL: "https://proyecto-erlc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "proyecto-erlc",
+    storageBucket: "proyecto-erlc.firebasestorage.app",
+    messagingSenderId: "213209172438",
+    appId: "1:213209172438:web:63bdcca16bfad791263c77",
+    measurementId: "G-VC0QNL6DJ1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const notif = document.getElementById('notif');
+const avisosRef = ref(db,'avisos/');
+
+onValue(avisosRef, snapshot => {
+    const avisos = snapshot.val() || {};
+    const count = Object.values(avisos).filter(a =>
+        a.estado === 'en_proceso' &&
+        Array.isArray(a.serviciosAsignados) &&
+        a.serviciosAsignados.includes('bomberos')
+    ).length;
+
+    notif.textContent = count;
+});
+</script>
+
+</body>
+</html>

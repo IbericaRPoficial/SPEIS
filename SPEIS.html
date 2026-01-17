@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Centralita Bomberos</title>
+<style>
+:root {
+    --bg-dark: #0a0c0f;         /* Fondo general */
+    --bg-card: #161b22;         /* Fondo de hover en menú */
+    --text-main: #e6edf3;       /* Color de texto principal */
+    --color-header: #330000;    /* Fondo del menú superior */
+    --color-accent: #ff6b6b;    /* Color al hacer hover */
+    --color-danger: #ff3b3b;    /* Color de alertas/badges */
+}
+
+body, html { 
+    margin:0; 
+    padding:0; 
+    height:100%; 
+    font-family: 'Segoe UI', Roboto, sans-serif; 
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+}
+
+.menu-frame { 
+    background-color: var(--color-header); 
+    color: var(--text-main); 
+}
+
+.menu-frame ul { 
+    list-style:none; 
+    margin:0; 
+    padding:0; 
+    display:flex; 
+    justify-content:space-around; 
+    align-items:center; 
+    height:100%; 
+}
+
+.menu-frame ul li { 
+    padding:10px 20px; 
+    cursor:pointer; 
+    text-transform:uppercase; 
+    font-weight:bold; 
+    font-size:12px; 
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.menu-frame ul li:hover { 
+    background-color: var(--bg-card); 
+    color: var(--color-accent); 
+}
+
+.badge { 
+    background-color: var(--color-danger); 
+    color:white; 
+    font-size:10px; 
+    padding:2px 6px; 
+    border-radius:50%; 
+    margin-left:5px; 
+}
+</style>
+</head>
+<frameset rows="60px,*" frameborder="0">
+    <!-- Frame superior: Menú -->
+    <frame src="menu.html" name="menuFrame" scrolling="no" class="menu-frame">
+    
+    <!-- Frame inferior: Contenido dinámico -->
+    <frame src="inicio.html" name="contenidoFrame">
+</frameset>
+</html>

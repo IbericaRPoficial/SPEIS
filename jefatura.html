@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Jefatura RCFR</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        background-color: #031626;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .container {
+        display: grid;
+        grid-template-columns: repeat(2, 200px);
+        grid-gap: 30px;
+    }
+
+    .cuadrado {
+        width: 200px;
+        height: 200px;
+        background-color: #c94031;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 18px;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .cuadrado:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px #fff;
+    }
+
+    /* Modal */
+    .modal {
+        overflow: hidden;
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: #031626;
+        padding: 10px;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 1200px;
+        height: 100%;
+        position: relative;
+        box-shadow: 0 0 30px #c94031;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        color: darkred;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .close:hover {
+        color: yellow;
+    }
+
+    iframe {
+        overflow: hidden;
+        flex: 1;
+        border: none;
+        border-radius: 10px;
+        background-color: #031626;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="cuadrado" onclick="abrirModal('modal1', 'historialincidencias.html')">Historial de Incidencias e Intervenciones</div>
+    <div class="cuadrado" onclick="abrirModal('modal2', 'placa.html')">Generador de Placas</div>
+    <div class="cuadrado" onclick="abrirModal('modal3', 'uniformes.html')">Uniformes</div>
+    <div class="cuadrado" onclick="abrirModal('modal4', 'estadisticas.html')">Estadísticas</div>
+</div>
+
+<!-- Modales -->
+<div id="modal1" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal('modal1')">&times;</span>
+        <iframe id="iframe1" src=""></iframe>
+    </div>
+</div>
+
+<div id="modal2" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal('modal2')">&times;</span>
+        <iframe id="iframe2" src=""></iframe>
+    </div>
+</div>
+
+<div id="modal3" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal('modal3')">&times;</span>
+        <iframe id="iframe3" src=""></iframe>
+    </div>
+</div>
+
+<div id="modal4" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal('modal4')">&times;</span>
+        <iframe id="iframe4" src=""></iframe>
+    </div>
+</div>
+
+<script>
+    function abrirModal(modalId, archivo) {
+        const modal = document.getElementById(modalId);
+        const iframe = modal.querySelector('iframe');
+        iframe.src = archivo;
+        modal.style.display = 'flex';
+    }
+
+    function cerrarModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const iframe = modal.querySelector('iframe');
+        iframe.src = '';
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                cerrarModal(modal.id);
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

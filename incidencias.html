@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bomberos · Incidencias e Intervenciones</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<style>
+body {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background-color: #0a0c0f;
+  color: #e6edf3;
+  margin: 0;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  color: #ff3b3b;
+  border-bottom: 2px solid #ff6b6b;
+  padding-bottom: 12px;
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+.form-container {
+  max-width: 700px;
+  margin: auto;
+  background-color: #161b22;
+  padding: 25px;
+  border-radius: 12px;
+  border-top: 4px solid #ff3b3b;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background-color: #0d1117;
+  color: #fff;
+  font-size: 14px;
+}
+textarea { resize: vertical; }
+.canvas-container { display: flex; justify-content: center; margin-top: 10px; margin-bottom: 10px; }
+canvas {
+  border: 1px solid #ff3b3b;
+  border-radius: 6px;
+  touch-action: none;
+  width: 80%;
+  max-width: 600px;
+  height: 200px;
+  background-color: #0d1117;
+}
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 48%;
+  margin-right: 4%;
+}
+button:last-child { margin-right: 0; }
+button.firebase { background-color: #34a853; color: #fff; }
+button.firebase:hover { background-color: #0f8a3e; }
+button.discord { background-color: #1a73e8; color: #fff; }
+button.discord:hover { background-color: #0f5ec1; }
+hr { border: 1px solid #30363d; margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<h1>Bomberos · Incidencias e Intervenciones</h1>
+
+<div class="form-container">
+  <form id="formGeneral">
+
+    <!-- DATOS GENERALES -->
+    <label>Fecha y Hora:</label>
+    <input type="datetime-local" id="fecha" required>
+
+    <label>Tipo:</label>
+    <select id="tipo" required>
+      <option value="">Selecciona</option>
+      <option value="Incidencia - Alarma">Incidencia - Alarma</option>
+      <option value="Incidencia - Rescate">Incidencia - Rescate</option>
+      <option value="Incidencia - Fuego">Incidencia - Fuego</option>
+      <option value="Incidencia - Accidente">Incidencia - Accidente</option>
+      <option value="Intervención - Incendio">Intervención - Incendio</option>
+      <option value="Intervención - Rescate">Intervención - Rescate</option>
+      <option value="Intervención - Accidente">Intervención - Accidente</option>
+      <option value="Intervención - Alerta">Intervención - Alerta</option>
+    </select>
+
+    <label>Ubicación / Dirección:</label>
+    <input type="text" id="ubicacion" placeholder="Calle, ciudad..." required>
+
+    <label>Descripción detallada:</label>
+    <textarea id="descripcion" rows="5" required></textarea>
+
+    <label>Placa / Bombero asignado:</label>
+    <input type="text" id="placa" placeholder="Ej: B-1234" required>
+
+    <label>Firma del responsable:</label>
+    <div class="canvas-container">
+      <canvas id="firmaCanvas"></canvas>
+    </div>
+    <button type="button" onclick="limpiarFirma()">Limpiar firma</button>
+
+    <div style="display:flex; justify-content:space-between;">
+      <button type="button" class="firebase" onclick="guardarFirebase()">Guardar en la base de datos</button>
+      <button type="button" class="discord" onclick="enviarDiscord()">Registrar en Discord</button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+// --- CONFIGURACIÓN FIREBASE ---
+const firebaseConfig = {
+      apiKey: "AIzaSyAuBRD8chGasqZ9EBN8BZqZymRQlnMg-RQ",
+      authDomain: "ibericadenunciasyincauta.firebaseapp.com",
+      databaseURL: "https://ibericadenunciasyincauta-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "ibericadenunciasyincauta",
+      storageBucket: "ibericadenunciasyincauta.firebasestorage.app",
+      messagingSenderId: "391793508120",
+      appId: "1:391793508120:web:afd8633f7f78fe2eeb686d",
+      measurementId: "G-TT88LPHZPR"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- CANVAS FIRMA ---
+function ajustarCanvas() {
+  const canvas = document.getElementById('firmaCanvas');
+  const ctx = canvas.getContext("2d");
+  const style = getComputedStyle(canvas);
+  const width = parseInt(style.getPropertyValue('width'));
+  const height = parseInt(style.getPropertyValue('height'));
+  canvas.width = width;
+  canvas.height = height;
+  ctx.strokeStyle = "#ff3b3b";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+
+  let dibujando=false;
+  function iniciarDibujo(x,y){ dibujando=true; ctx.beginPath(); ctx.moveTo(x,y);}
+  function trazarLinea(x,y){ if(!dibujando) return; ctx.lineTo(x,y); ctx.stroke();}
+  function detenerDibujo(){ dibujando=false; ctx.closePath(); }
+
+  function getCursorPos(e){
+    const rect = canvas.getBoundingClientRect();
+    if(e.touches){
+      return { x: (e.touches[0].clientX - rect.left)*(canvas.width/rect.width), y: (e.touches[0].clientY - rect.top)*(canvas.height/rect.height)};
+    } else { return { x: (e.offsetX)*(canvas.width/rect.width), y: (e.offsetY)*(canvas.height/rect.height)}; }
+  }
+
+  canvas.addEventListener("mousedown", e=>{ const p=getCursorPos(e); iniciarDibujo(p.x,p.y); });
+  canvas.addEventListener("mousemove", e=>{ const p=getCursorPos(e); trazarLinea(p.x,p.y); });
+  canvas.addEventListener("mouseup", detenerDibujo);
+  canvas.addEventListener("mouseout", detenerDibujo);
+
+  canvas.addEventListener("touchstart", e=>{ e.preventDefault(); const p=getCursorPos(e); iniciarDibujo(p.x,p.y); });
+  canvas.addEventListener("touchmove", e=>{ e.preventDefault(); const p=getCursorPos(e); trazarLinea(p.x,p.y); });
+  canvas.addEventListener("touchend", detenerDibujo);
+}
+ajustarCanvas();
+function limpiarFirma(){ 
+  const canvas=document.getElementById('firmaCanvas'); 
+  const ctx=canvas.getContext("2d"); 
+  ctx.clearRect(0,0,canvas.width,canvas.height); 
+}
+
+// --- DATOS ---
+function obtenerDatos(){
+  return {
+    fecha: document.getElementById("fecha").value,
+    tipo: document.getElementById("tipo").value,
+    ubicacion: document.getElementById("ubicacion").value,
+    descripcion: document.getElementById("descripcion").value,
+    placa: document.getElementById("placa").value,
+    firma: document.getElementById("firmaCanvas").toDataURL("image/png")
+  };
+}
+
+// --- FIREBASE ---
+async function guardarFirebase(){
+  const data = obtenerDatos();
+  if(!data.fecha||!data.tipo||!data.ubicacion||!data.descripcion||!data.placa){ 
+    alert("Completa todos los campos"); 
+    return; 
+  }
+
+  try {
+    await db.collection("incidencias_bomberos").add(data);
+    alert("✅ Incidencia guardada correctamente en Firebase");
+    document.getElementById("formGeneral").reset();
+    limpiarFirma();
+  } catch(err){
+    alert("❌ Error guardando en Firebase: "+err);
+  }
+}
+
+// --- Discord (opcional) ---
+const webhookURL = "TU_WEBHOOK_DE_DISCORD";
+async function enviarDiscord(){
+  const data = obtenerDatos();
+  if(!data.fecha||!data.tipo||!data.ubicacion||!data.descripcion||!data.placa){ 
+    alert("Completa todos los campos"); 
+    return; 
+  }
+
+  const blob = await (await fetch(data.firma)).blob();
+  const file = new File([blob], `Firma_${data.placa}.png`, {type:"image/png"});
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("payload_json", JSON.stringify({
+    content: `**Nueva Incidencia / Intervención - Bomberos**\nFecha: ${data.fecha}\nTipo: ${data.tipo}\nUbicación: ${data.ubicacion}\nDescripción: ${data.descripcion}\nPlaca: ${data.placa}`
+  }));
+
+  fetch(webhookURL, { method:"POST", body: formData })
+    .then(res=>res.ok ? alert("Enviado a Discord correctamente") : alert("Error enviando a Discord"))
+    .catch(err=>alert("Error: "+err));
+}
+</script>
+
+</body>
+</html>

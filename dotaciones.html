@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bomberos · Unidades Operativas</title>
+
+<style>
+:root {
+    --bg-dark:#0a0c0f;
+    --bg-card:#161b22;
+    --bg-input:#0d1117;
+    --text-main:#e6edf3;
+    --text-muted:#8b949e;
+    --color-header:#330000;   /* Rojo oscuro */
+    --color-accent:#ff6b6b;   /* Hover rojo suave */
+    --color-success:#238636;  /* Disponible verde */
+    --color-danger:#ff3b3b;   /* Ocupado rojo alerta */
+    --color-border:#30363d;
+}
+
+body {
+    font-family:'Segoe UI',Roboto,sans-serif;
+    background:var(--bg-dark);
+    color:var(--text-main);
+    margin:0;
+    padding:20px;
+}
+
+h2 {
+    text-align:center;
+    border-bottom:2px solid var(--color-accent);
+    padding-bottom:12px;
+    margin-bottom:25px;
+}
+
+.contenedor {
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:20px;
+}
+
+.card {
+    background:var(--bg-card);
+    padding:18px;
+    border-radius:6px;
+    border-top:4px solid var(--color-header);
+}
+
+/* === UNIDADES === */
+.unidad-base {
+    margin-bottom:25px;
+    border:1px solid var(--color-border);
+    border-radius:8px;
+    padding:15px;
+    background:#0f141b;
+}
+
+.unidad-base h3 {
+    margin:0 0 12px;
+    color:var(--color-accent);
+    border-bottom:1px solid var(--color-border);
+}
+
+.sub-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:10px;
+}
+
+.sub-box {
+    background:var(--bg-card);
+    border:1px solid var(--color-border);
+    border-radius:6px;
+    padding:8px;
+    text-align:center;
+    font-size:12px;
+    cursor:pointer;
+}
+
+.sub-box:hover {
+    outline:2px solid var(--color-accent);
+}
+
+.sub-box.libre { opacity:.5; }
+.sub-box.bloqueado { opacity:.35; pointer-events:none; }
+
+.estado {
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:10px;
+    font-weight:bold;
+    text-transform:uppercase;
+}
+
+.disponible { background:var(--color-success); }
+.ocupado { background:var(--color-danger); }
+
+/* === FORM === */
+input,select,button {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    background:var(--bg-input);
+    border:1px solid var(--color-border);
+    color:white;
+    border-radius:4px;
+}
+
+button {
+    background:var(--color-header);
+    border:1px solid var(--color-accent);
+    font-weight:bold;
+}
+
+button.rojo {
+    background:var(--color-danger);
+    border:none;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Unidades Operativas Bomberos</h2>
+
+<div class="contenedor">
+
+<div class="card">
+    <h3>Unidades en Servicio</h3>
+    <div id="lista"></div>
+</div>
+
+<div class="card">
+    <h3>Mi Unidad</h3>
+    <form id="formUnidad">
+        <input id="placa" placeholder="Placa" required>
+        <select id="unidadBase"></select>
+        <select id="subUnidad"></select>
+        <select id="estado">
+            <option value="disponible">Disponible</option>
+            <option value="ocupado">Ocupado</option>
+        </select>
+        <button type="submit">Guardar</button>
+        <button type="button" id="salir">Fuera de servicio</button>
+        <button type="button" id="cambiarPlaca" class="rojo">Cambiar placa</button>
+    </form>
+    <small id="info" style="color:var(--text-muted)"></small>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+
+/* === CONFIGURACIÓN DE UNIDADES BOMBEROS === */
+const UNIDADES_CONFIG = {
+    "BRIGADAS": ["1", "2", "3", "Operativa"],
+    "ZONAS": ["Central", "Norte", "Sur", "Este", "Oeste"],
+    "RESCATE": ["A", "B", "C"],
+    "MATERIAL": ["Vehículos", "Hidrantes", "Equipos"],
+    "JEFE": ["Jefe de Servicio", "Despacho Central", "Mando Operativo"]
+};
+
+const app = initializeApp({
+    apiKey:"AIzaSyAkho8Wvxnygmbl0pRXKGUjBIIP3qyEtK8",
+    databaseURL:"https://proyecto-erlc-default-rtdb.europe-west1.firebasedatabase.app"
+});
+
+const db = getDatabase(app);
+
+const lista = document.getElementById("lista");
+const placa = document.getElementById("placa");
+const selBase = document.getElementById("unidadBase");
+const selSub = document.getElementById("subUnidad");
+const estadoSel = document.getElementById("estado");
+const info = document.getElementById("info");
+
+let miPlaca = localStorage.getItem("bomberos_placa");
+
+/* === SELECTORES === */
+for (const u in UNIDADES_CONFIG)
+    selBase.innerHTML += `<option value="${u}">${u}</option>`;
+
+function cargarSub() {
+    selSub.innerHTML = "";
+    UNIDADES_CONFIG[selBase.value].forEach(s =>
+        selSub.innerHTML += `<option value="${s}">${selBase.value} ${s}</option>`
+    );
+}
+selBase.onchange = cargarSub;
+cargarSub();
+
+/* === RENDER UNIDADES Y CLICK === */
+onValue(ref(db,"unidades_bomberos"), snap => {
+    const data = snap.val() || {};
+    lista.innerHTML = "";
+
+    for (const base in UNIDADES_CONFIG) {
+        const baseDiv = document.createElement("div");
+        baseDiv.className = "unidad-base";
+        baseDiv.innerHTML = `<h3>${base}</h3>`;
+
+        const grid = document.createElement("div");
+        grid.className = "sub-grid";
+
+        UNIDADES_CONFIG[base].forEach(sub => {
+            const box = document.createElement("div");
+            box.className = "sub-box libre";
+            box.dataset.base = base;
+            box.dataset.sub = sub;
+
+            let html = `<strong>${base} ${sub}</strong><div>Libre</div>`;
+
+            if (data[base] && data[base][sub]) {
+                let content = `<strong>${base} ${sub}</strong>`;
+                for (const placaKey in data[base][sub]) {
+                    const estado = data[base][sub][placaKey].estado;
+                    content += `<div>${placaKey} <span class="estado ${estado}">${estado}</span></div>`;
+                }
+                html = content;
+            }
+
+            box.innerHTML = html;
+
+            /* CLICK PARA AUTO-SELECCIÓN */
+            box.onclick = () => {
+                selBase.value = base;
+                cargarSub();
+                selSub.value = sub;
+                placa.focus();
+            };
+
+            grid.appendChild(box);
+        });
+
+        baseDiv.appendChild(grid);
+        lista.appendChild(baseDiv);
+    }
+
+    if (miPlaca) {
+        placa.value = miPlaca;
+        placa.disabled = true;
+        info.textContent = "Placa bloqueada.";
+    }
+});
+
+/* === GUARDAR === */
+formUnidad.onsubmit = async e => {
+    e.preventDefault();
+    if (!miPlaca) {
+        miPlaca = placa.value.trim();
+        localStorage.setItem("bomberos_placa", miPlaca);
+    }
+    const refPath = `unidades_bomberos/${selBase.value}/${selSub.value}/${miPlaca}`;
+    await set(ref(db, refPath), {
+        estado:estadoSel.value,
+        ts:Date.now()
+    });
+};
+
+/* === FUERA DE SERVICIO SOLO MI PLACA === */
+salir.onclick = async () => {
+    if (!miPlaca) return;
+    const snap = await get(ref(db,"unidades_bomberos"));
+    const data = snap.val();
+    if (!data) return;
+
+    for (const base in data)
+        for (const sub in data[base])
+            if (data[base][sub][miPlaca]) {
+                await remove(ref(db,`unidades_bomberos/${base}/${sub}/${miPlaca}`));
+                return;
+            }
+};
+
+/* === CAMBIAR PLACA === */
+cambiarPlaca.onclick = () => {
+    localStorage.removeItem("bomberos_placa");
+    miPlaca = null;
+    placa.disabled = false;
+    placa.value = "";
+    info.textContent = "Introduce nueva placa";
+};
+</script>
+
+</body>
+</html>

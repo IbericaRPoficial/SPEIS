@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Configuración Bomberos</title>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0a0c0f;
+    color: #e6edf3;
+    margin: 0;
+    padding: 20px;
+}
+h1 { 
+    text-align: center; 
+    font-size: 28px; 
+    color: #ff3b3b; 
+    margin-bottom: 25px; 
+    border-bottom: 2px solid #ff6b6b; 
+    padding-bottom: 12px; 
+}
+.container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    max-width: 1200px;
+    margin: auto;
+    flex-wrap: wrap;
+}
+.card {
+    background-color: #161b22;
+    padding: 20px;
+    border-radius: 12px;
+    flex: 1 1 45%;
+    min-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 25px rgba(255,59,59,0.5);
+}
+.card h2 {
+    color: #ff3b3b;
+    margin-bottom: 15px;
+}
+.card label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.card input, .card select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background-color: #0d1117;
+    color: #fff;
+}
+button {
+    margin-top: 15px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+}
+button.save { background-color: #ff3b3b; }
+button.save:hover { background-color: #ff1a1a; }
+button.test { background-color: #1a73e8; }
+button.test:hover { background-color: #0f5ec1; }
+</style>
+</head>
+<body>
+
+<h1>Configuración Bomberos</h1>
+
+<div class="container">
+    <!-- Parte funcional -->
+    <div class="card">
+        <h2>Opciones de Sistema</h2>
+        <label>Enviar notificación automática</label>
+        <select id="autoNotify">
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+        </select>
+
+        <label>Alerta sonora al recibir incidencia</label>
+        <select id="alertSound">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+
+        <label>Tiempo de refresco de unidad (segundos)</label>
+        <input type="number" id="refreshTime" placeholder="Ej: 15">
+
+        <button class="save" onclick="guardarConfiguracion()">Guardar Configuración</button>
+        <button class="test" onclick="probarNotificacion()">Probar Notificación</button>
+    </div>
+
+    <!-- Parte visual/no funcional -->
+    <div class="card">
+        <h2>Apariencia y UI</h2>
+        <label>Color de fondo de panel</label>
+        <input type="color" id="panelColor" value="#161b22">
+
+        <label>Color de texto principal</label>
+        <input type="color" id="textColor" value="#e6edf3">
+
+        <label>Mostrar iconos animados</label>
+        <select id="animatedIcons">
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+        </select>
+
+        <label>Tipo de fuente</label>
+        <select id="fontType">
+            <option value="Segoe UI">Segoe UI</option>
+            <option value="Arial">Arial</option>
+            <option value="Roboto">Roboto</option>
+        </select>
+
+        <button class="save" onclick="aplicarEstilo()">Aplicar Estilo</button>
+    </div>
+</div>
+
+<script>
+// --- Parte funcional ---
+function guardarConfiguracion() {
+    const config = {
+        autoNotify: document.getElementById('autoNotify').value,
+        alertSound: document.getElementById('alertSound').value,
+        refreshTime: document.getElementById('refreshTime').value
+    };
+    console.log("Configuración guardada:", config);
+    alert("Configuración funcional guardada (simulación).");
+}
+
+function probarNotificacion() {
+    alert("¡Notificación de prueba enviada!");
+}
+
+// --- Parte visual ---
+function aplicarEstilo() {
+    const panelColor = document.getElementById('panelColor').value;
+    const textColor = document.getElementById('textColor').value;
+    const fontType = document.getElementById('fontType').value;
+    document.body.style.backgroundColor = panelColor;
+    document.body.style.color = textColor;
+    document.body.style.fontFamily = fontType;
+    alert("Estilo aplicado (simulación).");
+}
+</script>
+
+</body>
+</html>
